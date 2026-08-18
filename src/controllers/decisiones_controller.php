@@ -44,6 +44,12 @@ function decisiones_crear(): void
 
     registrar_actividad('decision', $decisionId, (int)$u['id'], 'creada');
 
+    foreach ($participantesIds as $pid) {
+        if ($pid !== (int)$u['id']) {
+            notificar_usuario($pid, 'decision_participante', "Te sumaron a la decisión \"$titulo\"", '/decisiones/' . $decisionId);
+        }
+    }
+
     redirigir($proyectoId ? '/proyecto/' . $proyectoId : '/');
 }
 

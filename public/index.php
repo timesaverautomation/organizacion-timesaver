@@ -34,6 +34,11 @@ $rutas = [
     ['POST', '#^/calendario/reuniones$#', 'calendario_reuniones_crear'],
     ['POST', '#^/calendario/reuniones/(\d+)/eliminar$#', 'calendario_reuniones_eliminar'],
 
+    ['POST', '#^/notificaciones/leidas$#', 'notificaciones_marcar_leidas'],
+
+    ['GET', '#^/perfil$#', 'perfil_ver'],
+    ['POST', '#^/perfil/preferencias$#', 'perfil_actualizar_preferencias'],
+
     ['GET', '#^/admin/usuarios$#', 'usuarios_index'],
     ['GET', '#^/admin/usuarios/nuevo$#', 'usuarios_nueva_form'],
     ['POST', '#^/admin/usuarios$#', 'usuarios_crear'],
@@ -48,6 +53,7 @@ $rutas = [
     ['POST', '#^/tareas$#', 'tareas_crear'],
     ['GET', '#^/tareas/(\d+)$#', 'tareas_ver'],
     ['POST', '#^/tareas/(\d+)/estado$#', 'tareas_actualizar_estado'],
+    ['POST', '#^/tareas/(\d+)/asignar$#', 'tareas_reasignar'],
     ['POST', '#^/tareas/(\d+)/comentarios$#', 'tareas_comentar'],
     ['POST', '#^/tareas/(\d+)/adjuntos$#', 'tareas_adjuntar'],
     ['POST', '#^/tareas/(\d+)/acceso$#', 'tareas_actualizar_acceso'],

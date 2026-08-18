@@ -11,6 +11,7 @@ CREATE TABLE usuarios (
     password_hash VARCHAR(255) NOT NULL,
     debe_cambiar_password TINYINT(1) NOT NULL DEFAULT 0,
     rol ENUM('admin', 'vendedor') NOT NULL DEFAULT 'vendedor',
+    recibir_emails TINYINT(1) NOT NULL DEFAULT 0,
     activo TINYINT(1) NOT NULL DEFAULT 1,
     creado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
@@ -138,6 +139,17 @@ CREATE TABLE adjuntos (
     FOREIGN KEY (creado_por) REFERENCES usuarios(id)
 ) ENGINE=InnoDB;
 
+CREATE TABLE notificaciones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    tipo VARCHAR(40) NOT NULL,
+    mensaje VARCHAR(300) NOT NULL,
+    link VARCHAR(300) NULL,
+    leida TINYINT(1) NOT NULL DEFAULT 0,
+    creado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE actividad_log (
     id INT AUTO_INCREMENT PRIMARY KEY,
     tipo_entidad ENUM('tarea', 'decision') NOT NULL,
@@ -156,6 +168,7 @@ CREATE INDEX idx_decisiones_proyecto ON decisiones(proyecto_id);
 CREATE INDEX idx_decisiones_limite ON decisiones(fecha_limite);
 CREATE INDEX idx_reuniones_fecha ON reuniones(fecha);
 CREATE INDEX idx_actividad_entidad ON actividad_log(tipo_entidad, entidad_id);
+CREATE INDEX idx_notificaciones_usuario ON notificaciones(usuario_id, leida);
 
 -- Usuarios iniciales (password: timesaver123 -- se fuerza el cambio en el primer login)
 INSERT INTO usuarios (nombre, email, password_hash, debe_cambiar_password, rol) VALUES

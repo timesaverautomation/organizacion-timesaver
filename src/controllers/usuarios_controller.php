@@ -47,3 +47,26 @@ function usuarios_actualizar_estado(int $id): void
     actualizar_estado_usuario($id, $activo);
     redirigir('/admin/usuarios');
 }
+
+function notificaciones_marcar_leidas(): void
+{
+    $u = requerir_login();
+    marcar_notificaciones_leidas((int)$u['id']);
+    $volver = $_SERVER['HTTP_REFERER'] ?? url('/');
+    header('Location: ' . $volver);
+    exit;
+}
+
+function perfil_ver(): void
+{
+    $u = requerir_login();
+    render('usuarios/perfil', ['usuario' => $u]);
+}
+
+function perfil_actualizar_preferencias(): void
+{
+    $u = requerir_login();
+    $recibir = input('recibir_emails') === '1';
+    actualizar_preferencia_email((int)$u['id'], $recibir);
+    redirigir('/perfil');
+}

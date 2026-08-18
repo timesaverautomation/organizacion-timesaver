@@ -47,6 +47,10 @@ function tareas_crear(): void
 
     registrar_actividad('tarea', $tareaId, (int)$u['id'], 'creada', $asignadoA ? "Asignada a usuario #$asignadoA" : null);
 
+    if ($asignadoA && $asignadoA !== (int)$u['id']) {
+        notificar_usuario($asignadoA, 'tarea_asignada', "Te asignaron la tarea \"$titulo\"", '/tareas/' . $tareaId);
+    }
+
     redirigir($proyectoId ? '/proyecto/' . $proyectoId : '/');
 }
 
@@ -92,6 +96,29 @@ function tareas_actualizar_estado(int $id): void
         $stmt = db()->prepare('UPDATE tareas SET estado = ? WHERE id = ?');
         $stmt->execute([$estado, $id]);
         registrar_actividad('tarea', $id, (int)$u['id'], 'cambio_estado', "Nuevo estado: $estado");
+    }
+    redirigir('/tareas/' . $id);
+}
+
+function tareas_reasignar(int $id): void
+{
+    $u = requerir_admin();
+    $tarea = obtener_tarea($id);
+    if (!$tarea) {
+        http_response_code(404);
+        return;
+    }
+    $nuevoAsignado = input('asignado_a', '') !== '' ? (int)input('asignado_a') : null;
+    $anteriorAsignado = $tarea['asignado_a'] ? (int)$tarea['asignado_a'] : null;
+
+    if ($nuevoAsignado !== $anteriorAsignado) {
+        $stmt = db()->prepare('UPDATE tareas SET asignado_a = ? WHERE id = ?');
+        $stmt->execute([$nuevoAsignado, $id]);
+        registrar_actividad('tarea', $id, (int)$u['id'], 'reasignada', $nuevoAsignado ? "Nuevo responsable: usuario #$nuevoAsignado" : 'Sin asignar');
+
+        if ($nuevoAsignado && $nuevoAsignado !== (int)$u['id']) {
+            notificar_usuario($nuevoAsignado, 'tarea_asignada', "Te asignaron la tarea \"{$tarea['titulo']}\"", '/tareas/' . $id);
+        }
     }
     redirigir('/tareas/' . $id);
 }

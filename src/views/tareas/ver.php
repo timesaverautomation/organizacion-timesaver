@@ -37,6 +37,23 @@
 
 <?php if ($esAdmin): ?>
 <div class="card" style="margin-top:16px;">
+  <form method="post" action="<?= url('/tareas/' . $tarea['id'] . '/asignar') ?>">
+    <label for="asignado_a">Reasignar tarea</label>
+    <div style="display:flex;gap:10px;">
+      <select id="asignado_a" name="asignado_a" style="max-width:200px;">
+        <option value="">Sin asignar</option>
+        <?php foreach ($usuarios as $us): ?>
+          <option value="<?= $us['id'] ?>" <?= (int)$tarea['asignado_a'] === (int)$us['id'] ? 'selected' : '' ?>><?= e($us['nombre']) ?></option>
+        <?php endforeach; ?>
+      </select>
+      <button type="submit" class="btn btn-sm">Reasignar</button>
+    </div>
+  </form>
+</div>
+<?php endif; ?>
+
+<?php if ($esAdmin): ?>
+<div class="card" style="margin-top:16px;">
   <form method="post" action="<?= url('/tareas/' . $tarea['id'] . '/acceso') ?>">
     <label for="compartido_con">Compartir acceso además del asignado</label>
     <?php $idsConAcceso = array_column($accesoCompartido, 'id'); ?>

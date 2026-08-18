@@ -301,3 +301,49 @@ function eliminar_reunion(int $id): void
 {
     db()->prepare('DELETE FROM reuniones WHERE id = ?')->execute([$id]);
 }
+
+/**
+ * Crea una notificación interna para un usuario y, si tiene activado
+ * recibir_emails, además le manda un email inmediato (best-effort).
+ */
+function notificar_usuario(int $usuarioId, string $tipo, string $mensaje, ?string $link = null): void
+{
+    $stmt = db()->prepare('INSERT INTO notificaciones (usuario_id, tipo, mensaje, link) VALUES (?, ?, ?, ?)');
+    $stmt->execute([$usuarioId, $tipo, $mensaje, $link]);
+
+    $stmtU = db()->prepare('SELECT nombre, email, recibir_emails FROM usuarios WHERE id = ? AND activo = 1');
+    $stmtU->execute([$usuarioId]);
+    $user = $stmtU->fetch();
+    if (!$user || !$user['recibir_emails']) {
+        return;
+    }
+
+    $urlCompleta = $link ? 'http://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . url($link) : '';
+    $cuerpo = "Hola {$user['nombre']},\n\n{$mensaje}" . ($urlCompleta ? "\n\n{$urlCompleta}" : '');
+    $headers = 'From: ' . MAIL_FROM_NAME . ' <' . MAIL_FROM . '>' . "\r\n" . 'Content-Type: text/plain; charset=UTF-8';
+    @mail($user['email'], 'Time Saver — ' . $mensaje, $cuerpo, $headers);
+}
+
+function listar_notificaciones(int $usuarioId, int $limite = 15): array
+{
+    $stmt = db()->prepare('SELECT * FROM notificaciones WHERE usuario_id = ? ORDER BY creado_en DESC LIMIT ' . (int)$limite);
+    $stmt->execute([$usuarioId]);
+    return $stmt->fetchAll();
+}
+
+function contar_notificaciones_no_leidas(int $usuarioId): int
+{
+    $stmt = db()->prepare('SELECT COUNT(*) FROM notificaciones WHERE usuario_id = ? AND leida = 0');
+    $stmt->execute([$usuarioId]);
+    return (int)$stmt->fetchColumn();
+}
+
+function marcar_notificaciones_leidas(int $usuarioId): void
+{
+    db()->prepare('UPDATE notificaciones SET leida = 1 WHERE usuario_id = ? AND leida = 0')->execute([$usuarioId]);
+}
+
+function actualizar_preferencia_email(int $usuarioId, bool $recibir): void
+{
+    db()->prepare('UPDATE usuarios SET recibir_emails = ? WHERE id = ?')->execute([$recibir ? 1 : 0, $usuarioId]);
+}
