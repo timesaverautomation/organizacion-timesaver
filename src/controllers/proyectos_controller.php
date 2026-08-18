@@ -54,11 +54,13 @@ function proyectos_ver(int $id): void
         return;
     }
 
+    $esVendedor = !es_admin($u);
     $vista = input('vista', 'todas') === 'mias' ? 'mias' : 'todas';
     $asignadoA = $vista === 'mias' ? (int)$u['id'] : null;
     $usuarioParticipante = $vista === 'mias' ? (int)$u['id'] : null;
+    $visibleParaUsuarioId = $esVendedor ? (int)$u['id'] : null;
 
-    $tareas = listar_tareas($id, false, $asignadoA);
+    $tareas = listar_tareas($id, false, $asignadoA, $visibleParaUsuarioId);
     $decisiones = listar_decisiones($id, false, $usuarioParticipante);
     $miembros = db()->prepare('SELECT us.id, us.nombre FROM proyecto_miembros pm JOIN usuarios us ON us.id = pm.usuario_id WHERE pm.proyecto_id = ? ORDER BY us.nombre');
     $miembros->execute([$id]);
@@ -66,6 +68,7 @@ function proyectos_ver(int $id): void
     render('proyectos/ver', [
         'proyecto' => $proyecto,
         'vista' => $vista,
+        'esVendedor' => $esVendedor,
         'tareas' => $tareas,
         'decisiones' => $decisiones,
         'miembros' => $miembros->fetchAll(),

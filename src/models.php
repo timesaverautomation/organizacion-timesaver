@@ -4,8 +4,11 @@ require_once __DIR__ . '/db.php';
 /**
  * Trae tareas con filtros opcionales: proyecto_id (null = todas, false = solo generales),
  * asignado_a (para vista "mías"), estado.
+ *
+ * $visibleParaUsuarioId: si se pasa, restringe el resultado a tareas asignadas
+ * a ese usuario o compartidas con él vía tarea_acceso (uso: rol vendedor).
  */
-function listar_tareas(?int $proyectoId = null, bool $soloGenerales = false, ?int $asignadoA = null): array
+function listar_tareas(?int $proyectoId = null, bool $soloGenerales = false, ?int $asignadoA = null, ?int $visibleParaUsuarioId = null): array
 {
     $sql = 'SELECT t.*, u.nombre AS asignado_nombre, p.nombre AS proyecto_nombre
             FROM tareas t
@@ -26,11 +29,49 @@ function listar_tareas(?int $proyectoId = null, bool $soloGenerales = false, ?in
         $params[] = $asignadoA;
     }
 
+    if ($visibleParaUsuarioId !== null) {
+        $sql .= ' AND (t.asignado_a = ? OR EXISTS (SELECT 1 FROM tarea_acceso ta WHERE ta.tarea_id = t.id AND ta.usuario_id = ?))';
+        $params[] = $visibleParaUsuarioId;
+        $params[] = $visibleParaUsuarioId;
+    }
+
     $sql .= ' ORDER BY (t.fecha_limite IS NULL), t.fecha_limite ASC, t.creado_en DESC';
 
     $stmt = db()->prepare($sql);
     $stmt->execute($params);
     return $stmt->fetchAll();
+}
+
+function usuario_puede_ver_tarea(array $tarea, array $usuario): bool
+{
+    if (es_admin($usuario)) {
+        return true;
+    }
+    if ((int)($tarea['asignado_a'] ?? 0) === (int)$usuario['id']) {
+        return true;
+    }
+    $stmt = db()->prepare('SELECT 1 FROM tarea_acceso WHERE tarea_id = ? AND usuario_id = ?');
+    $stmt->execute([$tarea['id'], $usuario['id']]);
+    return (bool)$stmt->fetchColumn();
+}
+
+function listar_acceso_tarea(int $tareaId): array
+{
+    $stmt = db()->prepare('SELECT u.id, u.nombre FROM tarea_acceso ta JOIN usuarios u ON u.id = ta.usuario_id WHERE ta.tarea_id = ? ORDER BY u.nombre');
+    $stmt->execute([$tareaId]);
+    return $stmt->fetchAll();
+}
+
+function guardar_acceso_tarea(int $tareaId, array $usuarioIds): void
+{
+    $pdo = db();
+    $pdo->prepare('DELETE FROM tarea_acceso WHERE tarea_id = ?')->execute([$tareaId]);
+    $stmt = $pdo->prepare('INSERT IGNORE INTO tarea_acceso (tarea_id, usuario_id) VALUES (?, ?)');
+    foreach (array_unique(array_map('intval', $usuarioIds)) as $uid) {
+        if ($uid > 0) {
+            $stmt->execute([$tareaId, $uid]);
+        }
+    }
 }
 
 function listar_decisiones(?int $proyectoId = null, bool $soloGenerales = false, ?int $usuarioId = null): array
@@ -140,4 +181,31 @@ function listar_actividad(string $tipoEntidad, int $entidadId): array
 function marcar_vencidas_automaticamente(): void
 {
     db()->exec("UPDATE decisiones SET estado = 'vencida' WHERE estado = 'abierta' AND fecha_limite < CURDATE()");
+}
+
+function listar_usuarios_admin(): array
+{
+    return db()->query('SELECT id, nombre, email, rol, activo, creado_en FROM usuarios ORDER BY activo DESC, nombre')->fetchAll();
+}
+
+function obtener_usuario_por_email(string $email): ?array
+{
+    $stmt = db()->prepare('SELECT * FROM usuarios WHERE email = ?');
+    $stmt->execute([$email]);
+    $u = $stmt->fetch();
+    return $u ?: null;
+}
+
+function crear_usuario(string $nombre, string $email, string $password, string $rol): int
+{
+    $hash = password_hash($password, PASSWORD_DEFAULT);
+    $stmt = db()->prepare('INSERT INTO usuarios (nombre, email, password_hash, debe_cambiar_password, rol) VALUES (?, ?, ?, 1, ?)');
+    $stmt->execute([$nombre, $email, $hash, $rol]);
+    return (int)db()->lastInsertId();
+}
+
+function actualizar_estado_usuario(int $id, bool $activo): void
+{
+    $stmt = db()->prepare('UPDATE usuarios SET activo = ? WHERE id = ?');
+    $stmt->execute([$activo ? 1 : 0, $id]);
 }

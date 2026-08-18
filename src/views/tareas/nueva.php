@@ -53,6 +53,17 @@
         <input type="date" id="fecha_limite" name="fecha_limite">
       </div>
     </div>
+    <?php if ($esAdmin): ?>
+    <div class="form-group">
+      <label for="compartido_con">Compartir acceso además del asignado (opcional)</label>
+      <select id="compartido_con" name="compartido_con[]" multiple size="5">
+        <?php foreach ($usuarios as $us): ?>
+          <option value="<?= $us['id'] ?>"><?= e($us['nombre']) ?></option>
+        <?php endforeach; ?>
+      </select>
+      <p class="text-muted" style="font-size:0.8rem;margin-top:4px;">Útil para usuarios con rol vendedor: van a poder ver esta tarea aunque no estén asignados.</p>
+    </div>
+    <?php endif; ?>
     <button type="submit" class="btn">Crear tarea</button>
   </form>
 </div>

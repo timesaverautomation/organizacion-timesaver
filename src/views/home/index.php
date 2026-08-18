@@ -3,10 +3,12 @@
     <h1>Home</h1>
     <p class="subtitle">Panorama general de tareas y decisiones de Time Saver.</p>
   </div>
+  <?php if (!$esVendedor): ?>
   <div class="toggle-group">
     <a href="<?= url('/?vista=todas') ?>" class="<?= $vista === 'todas' ? 'active' : '' ?>">Todas</a>
     <a href="<?= url('/?vista=mias') ?>" class="<?= $vista === 'mias' ? 'active' : '' ?>">Solo mías</a>
   </div>
+  <?php endif; ?>
 </div>
 
 <div class="stat-row">

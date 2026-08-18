@@ -9,6 +9,7 @@ require_once __DIR__ . '/../src/controllers/home_controller.php';
 require_once __DIR__ . '/../src/controllers/proyectos_controller.php';
 require_once __DIR__ . '/../src/controllers/tareas_controller.php';
 require_once __DIR__ . '/../src/controllers/decisiones_controller.php';
+require_once __DIR__ . '/../src/controllers/usuarios_controller.php';
 
 iniciar_sesion_segura();
 
@@ -23,7 +24,15 @@ $rutas = [
     ['POST', '#^/login$#', 'auth_login_submit'],
     ['GET', '#^/logout$#', 'auth_logout'],
 
+    ['GET', '#^/cambiar-password$#', 'auth_cambiar_password_form'],
+    ['POST', '#^/cambiar-password$#', 'auth_cambiar_password_submit'],
+
     ['GET', '#^/$#', 'home_index'],
+
+    ['GET', '#^/admin/usuarios$#', 'usuarios_index'],
+    ['GET', '#^/admin/usuarios/nuevo$#', 'usuarios_nueva_form'],
+    ['POST', '#^/admin/usuarios$#', 'usuarios_crear'],
+    ['POST', '#^/admin/usuarios/(\d+)/estado$#', 'usuarios_actualizar_estado'],
 
     ['GET', '#^/proyectos$#', 'proyectos_index'],
     ['GET', '#^/proyectos/nueva$#', 'proyectos_nueva_form'],
@@ -36,6 +45,7 @@ $rutas = [
     ['POST', '#^/tareas/(\d+)/estado$#', 'tareas_actualizar_estado'],
     ['POST', '#^/tareas/(\d+)/comentarios$#', 'tareas_comentar'],
     ['POST', '#^/tareas/(\d+)/adjuntos$#', 'tareas_adjuntar'],
+    ['POST', '#^/tareas/(\d+)/acceso$#', 'tareas_actualizar_acceso'],
 
     ['GET', '#^/decisiones/nueva$#', 'decisiones_nueva_form'],
     ['POST', '#^/decisiones$#', 'decisiones_crear'],

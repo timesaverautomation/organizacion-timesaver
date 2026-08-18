@@ -5,11 +5,13 @@ function home_index(): void
     $u = requerir_login();
     marcar_vencidas_automaticamente();
 
+    $esVendedor = !es_admin($u);
     $vista = input('vista', 'todas') === 'mias' ? 'mias' : 'todas';
     $asignadoA = $vista === 'mias' ? (int)$u['id'] : null;
     $usuarioParticipante = $vista === 'mias' ? (int)$u['id'] : null;
+    $visibleParaUsuarioId = $esVendedor ? (int)$u['id'] : null;
 
-    $tareas = listar_tareas(null, false, $asignadoA);
+    $tareas = listar_tareas(null, false, $asignadoA, $visibleParaUsuarioId);
     $decisiones = listar_decisiones(null, false, $usuarioParticipante);
 
     $tareasPendientes = array_filter($tareas, fn($t) => $t['estado'] !== 'hecha');
@@ -19,6 +21,7 @@ function home_index(): void
 
     render('home/index', [
         'vista' => $vista,
+        'esVendedor' => $esVendedor,
         'tareas' => $tareasPendientes,
         'decisiones' => $decisiones,
         'totalPendientes' => count($tareasPendientes),

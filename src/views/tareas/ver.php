@@ -35,6 +35,21 @@
   </form>
 </div>
 
+<?php if ($esAdmin): ?>
+<div class="card" style="margin-top:16px;">
+  <form method="post" action="<?= url('/tareas/' . $tarea['id'] . '/acceso') ?>">
+    <label for="compartido_con">Compartir acceso además del asignado</label>
+    <?php $idsConAcceso = array_column($accesoCompartido, 'id'); ?>
+    <select id="compartido_con" name="compartido_con[]" multiple size="5" style="width:100%;margin:8px 0;">
+      <?php foreach ($usuarios as $us): ?>
+        <option value="<?= $us['id'] ?>" <?= in_array($us['id'], $idsConAcceso, true) ? 'selected' : '' ?>><?= e($us['nombre']) ?></option>
+      <?php endforeach; ?>
+    </select>
+    <button type="submit" class="btn btn-sm">Guardar acceso</button>
+  </form>
+</div>
+<?php endif; ?>
+
 <div class="section" style="margin-top:28px;">
   <h2>Links / adjuntos</h2>
   <div class="stack" style="margin-bottom:12px;">

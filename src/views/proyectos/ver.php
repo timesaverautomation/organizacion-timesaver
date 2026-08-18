@@ -3,10 +3,12 @@
     <h1><?= e($proyecto['nombre']) ?></h1>
     <p class="subtitle"><?= e($proyecto['cliente']) ?> · <span class="badge <?= $proyecto['estado'] === 'activo' ? 'badge-ok' : 'badge-neutral' ?>"><?= e($proyecto['estado']) ?></span></p>
   </div>
+  <?php if (!$esVendedor): ?>
   <div class="toggle-group">
     <a href="<?= url('/proyecto/' . $proyecto['id'] . '?vista=todas') ?>" class="<?= $vista === 'todas' ? 'active' : '' ?>">Todas</a>
     <a href="<?= url('/proyecto/' . $proyecto['id'] . '?vista=mias') ?>" class="<?= $vista === 'mias' ? 'active' : '' ?>">Solo mías</a>
   </div>
+  <?php endif; ?>
 </div>
 
 <?php if ($proyecto['descripcion']): ?>

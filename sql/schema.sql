@@ -9,7 +9,8 @@ CREATE TABLE usuarios (
     nombre VARCHAR(120) NOT NULL,
     email VARCHAR(180) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    rol ENUM('admin', 'trabajador') NOT NULL DEFAULT 'trabajador',
+    debe_cambiar_password TINYINT(1) NOT NULL DEFAULT 0,
+    rol ENUM('admin', 'vendedor') NOT NULL DEFAULT 'vendedor',
     activo TINYINT(1) NOT NULL DEFAULT 1,
     creado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
@@ -99,6 +100,14 @@ CREATE TABLE decision_mensajes (
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 ) ENGINE=InnoDB;
 
+CREATE TABLE tarea_acceso (
+    tarea_id INT NOT NULL,
+    usuario_id INT NOT NULL,
+    PRIMARY KEY (tarea_id, usuario_id),
+    FOREIGN KEY (tarea_id) REFERENCES tareas(id) ON DELETE CASCADE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE adjuntos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     tipo_padre ENUM('tarea', 'decision') NOT NULL,
@@ -128,6 +137,8 @@ CREATE INDEX idx_decisiones_proyecto ON decisiones(proyecto_id);
 CREATE INDEX idx_decisiones_limite ON decisiones(fecha_limite);
 CREATE INDEX idx_actividad_entidad ON actividad_log(tipo_entidad, entidad_id);
 
--- Usuario admin inicial (password: timesaver123 -- CAMBIAR después del primer login)
-INSERT INTO usuarios (nombre, email, password_hash, rol) VALUES
-('Admin', 'admin@timesaver.local', '$2y$10$UcrCmJ7ioLfIWgy4AXoIJeZww3RmTukEk9175TqsBrGA5PIcdWFHK', 'admin');
+-- Usuarios iniciales (password: timesaver123 -- se fuerza el cambio en el primer login)
+INSERT INTO usuarios (nombre, email, password_hash, debe_cambiar_password, rol) VALUES
+('Alejandro Parra', 'ale.dani.parra@gmail.com', '$2y$10$UcrCmJ7ioLfIWgy4AXoIJeZww3RmTukEk9175TqsBrGA5PIcdWFHK', 1, 'admin'),
+('Gonzalo Volpe Gomez', 'gonzalomartinvg@gmail.com', '$2y$10$UcrCmJ7ioLfIWgy4AXoIJeZww3RmTukEk9175TqsBrGA5PIcdWFHK', 1, 'admin'),
+('Nahuel Fusco', 'nahuel9707@gmail.com', '$2y$10$UcrCmJ7ioLfIWgy4AXoIJeZww3RmTukEk9175TqsBrGA5PIcdWFHK', 1, 'vendedor');
