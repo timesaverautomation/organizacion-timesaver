@@ -1,0 +1,8 @@
+RewriteEngine On
+
+# Servir archivos reales (css/js) directamente
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+# Todo lo demás va al router
+RewriteRule ^ index.php [L]

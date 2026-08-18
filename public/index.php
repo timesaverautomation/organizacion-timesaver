@@ -1,0 +1,61 @@
+<?php
+require_once __DIR__ . '/../src/config.php';
+require_once __DIR__ . '/../src/db.php';
+require_once __DIR__ . '/../src/auth.php';
+require_once __DIR__ . '/../src/helpers.php';
+require_once __DIR__ . '/../src/models.php';
+require_once __DIR__ . '/../src/controllers/auth_controller.php';
+require_once __DIR__ . '/../src/controllers/home_controller.php';
+require_once __DIR__ . '/../src/controllers/proyectos_controller.php';
+require_once __DIR__ . '/../src/controllers/tareas_controller.php';
+require_once __DIR__ . '/../src/controllers/decisiones_controller.php';
+
+iniciar_sesion_segura();
+
+$uri = rawurldecode(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+$path = substr($uri, strlen(BASE_PATH));
+$path = '/' . trim($path, '/');
+$metodo = strtoupper($_SERVER['REQUEST_METHOD']);
+
+// [método, patrón regex, handler]
+$rutas = [
+    ['GET', '#^/login$#', 'auth_login_form'],
+    ['POST', '#^/login$#', 'auth_login_submit'],
+    ['GET', '#^/logout$#', 'auth_logout'],
+
+    ['GET', '#^/$#', 'home_index'],
+
+    ['GET', '#^/proyectos$#', 'proyectos_index'],
+    ['GET', '#^/proyectos/nueva$#', 'proyectos_nueva_form'],
+    ['POST', '#^/proyectos$#', 'proyectos_crear'],
+    ['GET', '#^/proyecto/(\d+)$#', 'proyectos_ver'],
+
+    ['GET', '#^/tareas/nueva$#', 'tareas_nueva_form'],
+    ['POST', '#^/tareas$#', 'tareas_crear'],
+    ['GET', '#^/tareas/(\d+)$#', 'tareas_ver'],
+    ['POST', '#^/tareas/(\d+)/estado$#', 'tareas_actualizar_estado'],
+    ['POST', '#^/tareas/(\d+)/comentarios$#', 'tareas_comentar'],
+    ['POST', '#^/tareas/(\d+)/adjuntos$#', 'tareas_adjuntar'],
+
+    ['GET', '#^/decisiones/nueva$#', 'decisiones_nueva_form'],
+    ['POST', '#^/decisiones$#', 'decisiones_crear'],
+    ['GET', '#^/decisiones/(\d+)$#', 'decisiones_ver'],
+    ['POST', '#^/decisiones/(\d+)/mensajes$#', 'decisiones_mensaje'],
+    ['POST', '#^/decisiones/(\d+)/resolver$#', 'decisiones_resolver'],
+    ['POST', '#^/decisiones/(\d+)/adjuntos$#', 'decisiones_adjuntar'],
+];
+
+foreach ($rutas as [$rutaMetodo, $patron, $handler]) {
+    if ($rutaMetodo !== $metodo) {
+        continue;
+    }
+    if (preg_match($patron, $path, $m)) {
+        array_shift($m);
+        $args = array_map('intval', $m);
+        call_user_func($handler, ...$args);
+        exit;
+    }
+}
+
+http_response_code(404);
+echo '404 — Página no encontrada';
