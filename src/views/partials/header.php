@@ -18,6 +18,7 @@
     <nav class="nav">
       <a href="<?= url('/') ?>" class="<?= ($_SERVER['REQUEST_URI'] === url('/')) ? 'active' : '' ?>">Home</a>
       <a href="<?= url('/proyectos') ?>">Proyectos</a>
+      <a href="<?= url('/calendario') ?>">Calendario</a>
       <?php if (es_admin($u)): ?>
       <a href="<?= url('/admin/usuarios') ?>">Usuarios</a>
       <?php endif; ?>

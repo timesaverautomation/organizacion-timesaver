@@ -10,6 +10,7 @@ require_once __DIR__ . '/../src/controllers/proyectos_controller.php';
 require_once __DIR__ . '/../src/controllers/tareas_controller.php';
 require_once __DIR__ . '/../src/controllers/decisiones_controller.php';
 require_once __DIR__ . '/../src/controllers/usuarios_controller.php';
+require_once __DIR__ . '/../src/controllers/calendario_controller.php';
 
 iniciar_sesion_segura();
 
@@ -28,6 +29,10 @@ $rutas = [
     ['POST', '#^/cambiar-password$#', 'auth_cambiar_password_submit'],
 
     ['GET', '#^/$#', 'home_index'],
+
+    ['GET', '#^/calendario$#', 'calendario_index'],
+    ['POST', '#^/calendario/reuniones$#', 'calendario_reuniones_crear'],
+    ['POST', '#^/calendario/reuniones/(\d+)/eliminar$#', 'calendario_reuniones_eliminar'],
 
     ['GET', '#^/admin/usuarios$#', 'usuarios_index'],
     ['GET', '#^/admin/usuarios/nuevo$#', 'usuarios_nueva_form'],

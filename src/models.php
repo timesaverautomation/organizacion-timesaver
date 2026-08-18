@@ -42,6 +42,32 @@ function listar_tareas(?int $proyectoId = null, bool $soloGenerales = false, ?in
     return $stmt->fetchAll();
 }
 
+/**
+ * Trae tareas con fecha_limite dentro de un rango [desde, hasta] (inclusive).
+ * $visibleParaUsuarioId: si se pasa, restringe a asignadas o compartidas con ese usuario.
+ */
+function listar_tareas_por_rango(string $desde, string $hasta, ?int $visibleParaUsuarioId = null): array
+{
+    $sql = 'SELECT t.*, u.nombre AS asignado_nombre, p.nombre AS proyecto_nombre
+            FROM tareas t
+            LEFT JOIN usuarios u ON u.id = t.asignado_a
+            LEFT JOIN proyectos p ON p.id = t.proyecto_id
+            WHERE t.fecha_limite BETWEEN ? AND ?';
+    $params = [$desde, $hasta];
+
+    if ($visibleParaUsuarioId !== null) {
+        $sql .= ' AND (t.asignado_a = ? OR EXISTS (SELECT 1 FROM tarea_acceso ta WHERE ta.tarea_id = t.id AND ta.usuario_id = ?))';
+        $params[] = $visibleParaUsuarioId;
+        $params[] = $visibleParaUsuarioId;
+    }
+
+    $sql .= ' ORDER BY t.fecha_limite ASC';
+
+    $stmt = db()->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
+
 function usuario_puede_ver_tarea(array $tarea, array $usuario): bool
 {
     if (es_admin($usuario)) {
@@ -208,4 +234,70 @@ function actualizar_estado_usuario(int $id, bool $activo): void
 {
     $stmt = db()->prepare('UPDATE usuarios SET activo = ? WHERE id = ?');
     $stmt->execute([$activo ? 1 : 0, $id]);
+}
+
+/**
+ * Trae reuniones dentro de un rango de fechas [desde, hasta] (inclusive).
+ * $visibleParaUsuarioId: si se pasa, restringe a reuniones donde ese usuario participa.
+ */
+function listar_reuniones(string $desde, string $hasta, ?int $visibleParaUsuarioId = null): array
+{
+    $sql = 'SELECT r.*, u.nombre AS creado_por_nombre
+            FROM reuniones r
+            JOIN usuarios u ON u.id = r.creado_por
+            WHERE r.fecha BETWEEN ? AND ?';
+    $params = [$desde, $hasta];
+
+    if ($visibleParaUsuarioId !== null) {
+        $sql .= ' AND EXISTS (SELECT 1 FROM reunion_participantes rp WHERE rp.reunion_id = r.id AND rp.usuario_id = ?)';
+        $params[] = $visibleParaUsuarioId;
+    }
+
+    $sql .= ' ORDER BY r.fecha ASC, r.hora_inicio ASC';
+
+    $stmt = db()->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
+
+function obtener_reunion(int $id): ?array
+{
+    $stmt = db()->prepare('SELECT r.*, u.nombre AS creado_por_nombre FROM reuniones r JOIN usuarios u ON u.id = r.creado_por WHERE r.id = ?');
+    $stmt->execute([$id]);
+    $r = $stmt->fetch();
+    return $r ?: null;
+}
+
+function listar_participantes_reunion(int $reunionId): array
+{
+    $stmt = db()->prepare('SELECT u.id, u.nombre FROM reunion_participantes rp JOIN usuarios u ON u.id = rp.usuario_id WHERE rp.reunion_id = ? ORDER BY u.nombre');
+    $stmt->execute([$reunionId]);
+    return $stmt->fetchAll();
+}
+
+function usuario_participa_reunion(int $reunionId, int $usuarioId): bool
+{
+    $stmt = db()->prepare('SELECT 1 FROM reunion_participantes WHERE reunion_id = ? AND usuario_id = ?');
+    $stmt->execute([$reunionId, $usuarioId]);
+    return (bool)$stmt->fetchColumn();
+}
+
+function crear_reunion(string $titulo, string $fecha, string $horaInicio, string $horaFin, int $creadoPor, array $participantes): int
+{
+    $stmt = db()->prepare('INSERT INTO reuniones (titulo, fecha, hora_inicio, hora_fin, creado_por) VALUES (?, ?, ?, ?, ?)');
+    $stmt->execute([$titulo, $fecha, $horaInicio, $horaFin, $creadoPor]);
+    $reunionId = (int)db()->lastInsertId();
+
+    $participantesIds = array_unique(array_merge(array_map('intval', $participantes), [$creadoPor]));
+    $stmtP = db()->prepare('INSERT IGNORE INTO reunion_participantes (reunion_id, usuario_id) VALUES (?, ?)');
+    foreach ($participantesIds as $pid) {
+        $stmtP->execute([$reunionId, $pid]);
+    }
+
+    return $reunionId;
+}
+
+function eliminar_reunion(int $id): void
+{
+    db()->prepare('DELETE FROM reuniones WHERE id = ?')->execute([$id]);
 }

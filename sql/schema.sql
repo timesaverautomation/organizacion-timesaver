@@ -108,6 +108,25 @@ CREATE TABLE tarea_acceso (
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+CREATE TABLE reuniones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    titulo VARCHAR(200) NOT NULL,
+    fecha DATE NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fin TIME NOT NULL,
+    creado_por INT NOT NULL,
+    creado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (creado_por) REFERENCES usuarios(id)
+) ENGINE=InnoDB;
+
+CREATE TABLE reunion_participantes (
+    reunion_id INT NOT NULL,
+    usuario_id INT NOT NULL,
+    PRIMARY KEY (reunion_id, usuario_id),
+    FOREIGN KEY (reunion_id) REFERENCES reuniones(id) ON DELETE CASCADE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE adjuntos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     tipo_padre ENUM('tarea', 'decision') NOT NULL,
@@ -135,6 +154,7 @@ CREATE INDEX idx_tareas_asignado ON tareas(asignado_a);
 CREATE INDEX idx_tareas_limite ON tareas(fecha_limite);
 CREATE INDEX idx_decisiones_proyecto ON decisiones(proyecto_id);
 CREATE INDEX idx_decisiones_limite ON decisiones(fecha_limite);
+CREATE INDEX idx_reuniones_fecha ON reuniones(fecha);
 CREATE INDEX idx_actividad_entidad ON actividad_log(tipo_entidad, entidad_id);
 
 -- Usuarios iniciales (password: timesaver123 -- se fuerza el cambio en el primer login)
